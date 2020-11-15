@@ -1,0 +1,21 @@
+
+service: customers
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: eu-west-1
+  apiGateway:
+    shouldStartNameWithService: true
+
+functions:
+  getAllCustomers:
+    handler: src/handlers/handler.getAllCustomers
+    description: Get All Customers from DB
+    events:
+      - http:
+          path: customers
+          method: get
