@@ -1,15 +1,39 @@
-
 service: customers
 
 frameworkVersion: '2'
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+    migration:
+      dir: offline/migrations
 
 provider:
   name: aws
   runtime: nodejs12.x
   stage: dev
-  region: eu-west-1
+  region: eu-central-1
   apiGateway:
     shouldStartNameWithService: true
+  environment:
+    CUSTOMERS_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
 
 functions:
   getAllCustomers:
@@ -19,3 +43,44 @@ functions:
       - http:
           path: customers
           method: get
+          cors: true
+  getCustomer:
+    handler: src/handlers/handler.getCustomer
+    description: Get customer from DB by it's id
+    events:
+      - http:
+          path: customers/{id}
+          method: get
+          cors: true
+  createCustomer:
+      handler: src/handlers/handler.createCustomer
+      description: Create customer
+      events:
+        - http:
+            path: customers
+            method: post
+            cors: true
+  deleteCustomer:
+    handler: src/handlers/handler.deleteCustomer
+    description: Delete a customer given it's id
+    events:
+      - http:
+          path: customers/{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    CustomersDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.CUSTOMERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

@@ -1,18 +1,23 @@
 'use strict';
 
-module.exports.getAllCustomers = async event => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: 'Go Serverless v1.0! Your function executed successfully!',
-        input: event,
-      },
-      null,
-      2
-    ),
-  };
+const customerService = require('../service/customerService');
+const responses = require('../common/response');
 
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
+module.exports.getAllCustomers = async event => {
+    return await customerService.getAllCustomers();
+};
+
+module.exports.getCustomer = async event => {
+    if (!event.pathParameters || !event.pathParameters.id) return responses.badRequest();
+    return await customerService.getCustomer(event.pathParameters.id);
+}
+
+module.exports.deleteCustomer = async event => {
+    if (!event.pathParameters || !event.pathParameters.id) return responses.badRequest();
+    return await customerService.deleteCustomer(event.pathParameters.id);
+}
+
+module.exports.createCustomer = async event => {
+    const requestBody = JSON.parse(event.body);
+    return await customerService.createCustomer(requestBody);
 };
