@@ -68,6 +68,14 @@ functions:
           path: customers/{id}
           method: delete
           cors: true
+  updateCustomer:
+    handler: src/handlers/handler.updateCustomer
+    description: Update a customer
+    events:
+      - http:
+          path: customers/{id}
+          method: put
+          cors: true
 
 resources:
   Resources:

@@ -8,6 +8,7 @@ const saveCustomerToDB = customer => Dynamo.write(customer, process.env.CUSTOMER
 const getCustomerFromDB = id => Dynamo.get(id, process.env.CUSTOMERS_TABLE)
 const getAllCustomersFromDB = () => Dynamo.getAll(process.env.CUSTOMERS_TABLE);
 const deleteCustomerFromDB = id => Dynamo.delete(id, process.env.CUSTOMERS_TABLE);
+const updateCustomerToDB = (body, id) => Dynamo.update(body, id, process.env.CUSTOMERS_TABLE);
 
 const buildCustomerInfo = (firstName, lastName) => {
     const timestamp = new Date().getTime();
@@ -17,6 +18,15 @@ const buildCustomerInfo = (firstName, lastName) => {
         lastName: lastName,
         createdAt: timestamp,
         updatedAt: timestamp,
+    }
+}
+
+module.exports.updateCustomer = async (body, id) => {
+    try{
+        let data = await updateCustomerToDB(body, id);
+        return responses.success({body: data});
+    }catch(error){
+        return responses.failure({error: error});
     }
 }
 
