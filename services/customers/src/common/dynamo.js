@@ -51,9 +51,9 @@ const Dynamo = {
         return await documentClient.delete(params).promise();
     },
 
-    async update(data, tableName) {
-        if(!data.id) throw Error('No ID on the data');
-        let params = buildParamsForPutRequest(data, data.id, tableName);
+    async update(data, id, tableName) {
+        if(!id) throw Error('No ID on the data');
+        let params = buildParamsForPutRequest(data, id, tableName);
         const res = await documentClient.update(params).promise();
         if(!res) throw Error('There was an error updating the element');
 

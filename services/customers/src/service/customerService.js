@@ -1,5 +1,6 @@
 const uuid = require('uuid');
 const Dynamo = require('../common/dynamo');
+const S3 = require("../common/s3");
 const responses = require('../common/response');
 
 const inputFormatNotValid = (firstName, lastName) => typeof firstName !== 'string' || typeof lastName !== 'string';
@@ -16,12 +17,13 @@ const buildCustomerInfo = (firstName, lastName) => {
         id: uuid.v4(),
         firstName: firstName,
         lastName: lastName,
+        imagePath: process.env.DEFAULT_IMAGE_PATH,
         createdAt: timestamp,
         updatedAt: timestamp,
     }
 }
 
-module.exports.updateCustomer = async (body, id) => {
+const updateCustomer = async (body, id) => {
     try{
         let data = await updateCustomerToDB(body, id);
         return responses.success({body: data});
@@ -29,6 +31,8 @@ module.exports.updateCustomer = async (body, id) => {
         return responses.failure({error: error});
     }
 }
+
+module.exports.updateCustomer = updateCustomer;
 
 module.exports.deleteCustomer = async id => {
     await deleteCustomerFromDB(id);
@@ -59,3 +63,21 @@ module.exports.createCustomer = async customerData => {
         return responses.failure({error: error});
     }
 };
+
+module.exports.getUploadS3URL = async key => {
+    let preSignedURL = S3.getUploadURL(key, process.env.CUSTOMERS_IMAGES_BUCKET, 'image/jpeg')
+    if(preSignedURL){
+        return responses.success({body: {
+                "uploadURL": preSignedURL,
+                "photoFilename": key
+        }});
+    }else responses.failure({error: "Could not get a preSigned URL"})
+}
+
+module.exports.assignImageToCustomer = async fileName => {
+    let userId = fileName.substring(0, fileName.indexOf("."));
+    console.log(userId);
+    let dataToUpdate = {imagePath: fileName}
+    console.log(dataToUpdate);
+    return updateCustomer(dataToUpdate, userId)
+}

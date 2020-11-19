@@ -28,3 +28,14 @@ module.exports.updateCustomer = async event => {
     const requestBody = JSON.parse(event.body);
     return await customerService.updateCustomer(requestBody, event.pathParameters.id);
 }
+
+module.exports.getUploadURL = async event => {
+    if(!event.pathParameters || !event.pathParameters.id) return responses.badRequest();
+    let key = event.pathParameters.id + ".jpg";
+    return customerService.getUploadS3URL(key);
+}
+
+module.exports.uploadedCustomerImageToS3 = async event => {
+    let fileName = event.Records[0].s3.object.key;
+    return await customerService.assignImageToCustomer(fileName);
+}

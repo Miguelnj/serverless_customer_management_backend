@@ -5,6 +5,7 @@ frameworkVersion: '2'
 plugins:
   - serverless-offline
   - serverless-dynamodb-local
+  - serverless-s3-local
 
 custom:
   dynamodb:
@@ -16,6 +17,10 @@ custom:
       migrate: true
     migration:
       dir: offline/migrations
+  s3:
+    stages:
+      - dev
+    host: localhost
 
 provider:
   name: aws
@@ -26,6 +31,8 @@ provider:
     shouldStartNameWithService: true
   environment:
     CUSTOMERS_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    CUSTOMERS_IMAGES_BUCKET: theam-recruiting-${self:service}-images-${opt:stage, self:provider.stage}
+    DEFAULT_IMAGE_PATH: dummy_image.png
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -33,6 +40,11 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
+        - dynamodb:updateItem
+        - s3:putObject
+        - s3:putObjectAcl
+        - s3:listBucket
+        - s3:getObject
       Resource: "*"
 
 functions:
@@ -76,6 +88,24 @@ functions:
           path: customers/{id}
           method: put
           cors: true
+  getUploadURL:
+    handler: src/handlers/handler.getUploadURL
+    description: Get a presigned url to upload file to S3
+    events:
+      - http:
+          path: images/upload/{id}
+          method: get
+          cors: true
+  customerImageUploadedToS3:
+    handler: src/handlers/handler.uploadedCustomerImageToS3
+    description: assign the uploaded customer photo to it
+    events:
+      - s3:
+          bucket: theam-recruiting-${self:service}-images-${opt:stage, self:provider.stage}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .jpg
+          existing: true
 
 resources:
   Resources:
@@ -92,3 +122,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    CustomersImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: theam-recruiting-${self:service}-images-${opt:stage, self:provider.stage}
