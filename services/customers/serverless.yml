@@ -40,7 +40,8 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
-        - dynamodb:updateItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
         - s3:putObject
         - s3:putObjectAcl
         - s3:listBucket
