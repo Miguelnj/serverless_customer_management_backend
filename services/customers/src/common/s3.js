@@ -42,6 +42,17 @@ const S3 = {
             ACL: 'public-read'
         }
         return s3Client.getSignedUrl('putObject', s3Params);
+    },
+
+    getPreSignedItemURL(key, bucket){
+        const signedUrlExpireSeconds = 60 * 60 //1 hour
+        const params = {
+            Bucket: bucket,
+            Key: key,
+            Expires: signedUrlExpireSeconds
+        }
+        console.log(params);
+        return s3Client.getSignedUrl('getObject', params)
     }
 };
 

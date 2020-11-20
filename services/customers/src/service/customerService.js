@@ -17,7 +17,7 @@ const buildCustomerInfo = (firstName, lastName) => {
         id: uuid.v4(),
         firstName: firstName,
         lastName: lastName,
-        imagePath: process.env.DEFAULT_IMAGE_PATH,
+        imageKey: process.env.DEFAULT_IMAGE_PATH,
         createdAt: timestamp,
         updatedAt: timestamp,
     }
@@ -32,7 +32,16 @@ const updateCustomer = async (body, id) => {
     }
 }
 
+const getCustomerImageURL = async imageKey => {
+    let preSignedURL = S3.getPreSignedItemURL(imageKey, process.env.CUSTOMERS_IMAGES_BUCKET);
+    if(preSignedURL){
+        return responses.success({body: {
+                "uploadURL": preSignedURL}});
+    }else responses.failure({error: "Could not get a preSigned URL"})
+}
+
 module.exports.updateCustomer = updateCustomer;
+module.exports.getCustomerImageURL = getCustomerImageURL;
 
 module.exports.deleteCustomer = async id => {
     await deleteCustomerFromDB(id);
@@ -49,7 +58,8 @@ module.exports.getCustomer = async id => {
     let data = await getCustomerFromDB(id);
     if(!data) return responses.failure({error: "Internal server error"});
     if(!data.Item) return responses.notFound();
-    else return responses.success({body: data.Item})
+    if(data.Item.imageKey) data.Item.imageURL = await S3.getPreSignedItemURL(data.Item.imageKey, process.env.CUSTOMERS_IMAGES_BUCKET);
+    return responses.success({body: data.Item})
 };
 
 module.exports.createCustomer = async customerData => {
@@ -76,8 +86,6 @@ module.exports.getUploadS3URL = async key => {
 
 module.exports.assignImageToCustomer = async fileName => {
     let userId = fileName.substring(0, fileName.indexOf("."));
-    console.log(userId);
-    let dataToUpdate = {imagePath: fileName}
-    console.log(dataToUpdate);
+    let dataToUpdate = {imageKey: fileName}
     return updateCustomer(dataToUpdate, userId)
 }

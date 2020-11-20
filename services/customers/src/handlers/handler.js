@@ -39,3 +39,8 @@ module.exports.uploadedCustomerImageToS3 = async event => {
     let fileName = event.Records[0].s3.object.key;
     return await customerService.assignImageToCustomer(fileName);
 }
+
+module.exports.getCustomerImageURL = async event => {
+    if(!event.pathParameters || !event.pathParameters.id) return responses.badRequest();
+    return customerService.getCustomerImageURL(event.pathParameters.id);
+}

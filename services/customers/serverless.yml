@@ -106,6 +106,14 @@ functions:
           rules:
             - suffix: .jpg
           existing: true
+  customerGetImageURL:
+    handler: src/handlers/handler.getCustomerImageURL
+    description: get customer image url
+    events:
+      - http:
+          path: images/retrieve/{id}
+          method: get
+          cors: true
 
 resources:
   Resources:
