@@ -57,6 +57,10 @@ functions:
           path: customers
           method: get
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   getCustomer:
     handler: src/handlers/handler.getCustomer
     description: Get customer from DB by it's id
@@ -65,6 +69,10 @@ functions:
           path: customers/{id}
           method: get
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   createCustomer:
       handler: src/handlers/handler.createCustomer
       description: Create customer
@@ -73,6 +81,10 @@ functions:
             path: customers
             method: post
             cors: true
+            authorizer:
+              type: COGNITO_USER_POOLS
+              authorizerId:
+                Ref: ApiGatewayAuthorizer
   deleteCustomer:
     handler: src/handlers/handler.deleteCustomer
     description: Delete a customer given it's id
@@ -81,6 +93,10 @@ functions:
           path: customers/{id}
           method: delete
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   updateCustomer:
     handler: src/handlers/handler.updateCustomer
     description: Update a customer
@@ -89,6 +105,10 @@ functions:
           path: customers/{id}
           method: put
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   getUploadURL:
     handler: src/handlers/handler.getUploadURL
     description: Get a presigned url to upload file to S3
@@ -97,6 +117,10 @@ functions:
           path: images/upload/{id}
           method: get
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   customerImageUploadedToS3:
     handler: src/handlers/handler.uploadedCustomerImageToS3
     description: assign the uploaded customer photo to it
@@ -115,6 +139,10 @@ functions:
           path: images/retrieve/{id}
           method: get
           cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
 
 resources:
   Resources:
@@ -135,3 +163,40 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: theam-recruiting-${self:service}-images-${opt:stage, self:provider.stage}
+
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:provider.stage}-user-pool
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: False
+            RequireNumbers: True
+            RequireSymbols: False
+            RequireUppercase: True
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:provider.stage}-user-pool-client
+        GenerateSecret: False
+        UserPoolId:
+          Ref: CognitoUserPool
+        ExplicitAuthFlows:
+          - ADMIN_NO_SRP_AUTH
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [CognitoUserPool, Arn]
