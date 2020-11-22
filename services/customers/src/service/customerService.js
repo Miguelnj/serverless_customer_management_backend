@@ -45,7 +45,7 @@ module.exports.getCustomerImageURL = getCustomerImageURL;
 
 module.exports.deleteCustomer = async id => {
     await deleteCustomerFromDB(id);
-    return responses.deleted();
+    return responses.noContent();
 }
 
 module.exports.getAllCustomers = async () => {

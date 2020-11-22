@@ -20,7 +20,7 @@ response.created = ({ body }) => {
     }
 };
 
-response.deleted = () => {
+response.noContent = () => {
     return {
         statusCode: 204,
         headers: {

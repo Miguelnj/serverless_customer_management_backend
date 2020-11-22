@@ -33,6 +33,7 @@ provider:
     CUSTOMERS_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     CUSTOMERS_IMAGES_BUCKET: theam-recruiting-${self:service}-images-${opt:stage, self:provider.stage}
     DEFAULT_IMAGE_PATH: dummy_image.png
+    COGNITO_CLIENT_ID: 1ill27172rcib20jnttldb46eh
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -143,6 +144,25 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
+  signUpCognitoUser:
+    handler: src/handlers/cognito.signUpCognitoUser
+    description: Sign up a cognito user to use the api
+    events:
+      - http:
+          path: users/register
+          method: post
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  PreSignUp:
+    handler: src/handlers/cognito.preSignUp
+    events:
+      - cognitoUserPool:
+          pool: ${self:provider.stage}-user-pool
+          trigger: PreSignUp
+
 
 resources:
   Resources:
