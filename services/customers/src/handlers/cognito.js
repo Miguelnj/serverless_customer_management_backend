@@ -20,11 +20,8 @@ module.exports.signUpCognitoUser = async event => {
     let body = JSON.parse(event.body);
     if (!body.email || !body.password) return responses.badRequest();
     let params = buildParams(body);
-
     let response = await signUpCognitoUser(params);
-    console.log(response);
-
-    return responses.success({body: "Not functional yet"})
+    return responses.success({body: response})
 };
 
 module.exports.preSignUp = (event, context, callback) => {
