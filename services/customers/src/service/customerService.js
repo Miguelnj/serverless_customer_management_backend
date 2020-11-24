@@ -11,20 +11,23 @@ const getAllCustomersFromDB = () => Dynamo.getAll(process.env.CUSTOMERS_TABLE);
 const deleteCustomerFromDB = id => Dynamo.delete(id, process.env.CUSTOMERS_TABLE);
 const updateCustomerToDB = (body, id) => Dynamo.update(body, id, process.env.CUSTOMERS_TABLE);
 
-const buildCustomerInfo = (firstName, lastName) => {
+const buildCustomerInfo = (firstName, lastName, cognitoUser) => {
     const timestamp = new Date().getTime();
     return {
         id: uuid.v4(),
         firstName: firstName,
         lastName: lastName,
         imageKey: process.env.DEFAULT_IMAGE_PATH,
+        createdBy: cognitoUser,
+        updatedBy: cognitoUser,
         createdAt: timestamp,
         updatedAt: timestamp,
     }
 }
 
-const updateCustomer = async (body, id) => {
+const updateCustomer = async (body, id, cognitoUser) => {
     try{
+        body.updatedBy = cognitoUser;
         let data = await updateCustomerToDB(body, id);
         return responses.success({body: data});
     }catch(error){
@@ -62,12 +65,12 @@ module.exports.getCustomer = async id => {
     return responses.success({body: data.Item})
 };
 
-module.exports.createCustomer = async customerData => {
+module.exports.createCustomer = async (customerData, cognitoUser) => {
     let firstName = customerData.firstName;
     let lastName = customerData.lastName;
     if (inputFormatNotValid(firstName, lastName)) return responses.badRequest();
     try{
-        let data = await saveCustomerToDB(buildCustomerInfo(firstName, lastName));
+        let data = await saveCustomerToDB(buildCustomerInfo(firstName, lastName, cognitoUser));
         return responses.created({body: data});
     }catch (error){
         return responses.failure({error: error});

@@ -20,13 +20,13 @@ module.exports.deleteCustomer = async event => {
 module.exports.createCustomer = async event => {
     if (!event.body) return responses.badRequest();
     const requestBody = JSON.parse(event.body);
-    return await customerService.createCustomer(requestBody);
+    return await customerService.createCustomer(requestBody, event.requestContext.authorizer.claims.email);
 };
 
 module.exports.updateCustomer = async event => {
     if (!event.pathParameters || !event.pathParameters.id || !event.body) return responses.badRequest();
     const requestBody = JSON.parse(event.body);
-    return await customerService.updateCustomer(requestBody, event.pathParameters.id);
+    return await customerService.updateCustomer(requestBody, event.pathParameters.id, event.requestContext.authorizer.claims.email);
 }
 
 module.exports.getUploadURL = async event => {
